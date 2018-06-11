@@ -60,9 +60,11 @@ var Controller = exports.Controller = function () {
         this.readline.on('line', this.handleInput);
 
         this.currentShip = 'battleship:0';
+        this.winner = 0;
 
         this.ships = {
             amount: 10,
+            parts: 20,
             battleship: {
                 size: 4,
                 amount: 1
@@ -156,7 +158,16 @@ var Controller = exports.Controller = function () {
                         console.log('\nTake a hit, Player2:\n');
                     } else {
                         this.render.renderShootingTable(this.table2player);
-                        console.log('\nTake a hit, Player1:\n');
+
+                        console.log((await this.calculateWin(this.table2player)));
+
+                        if ((await this.calculateWin(this.table2player)) === this.ships.parts) {
+                            this.winner = 1;
+                            this.gameState = this.GAME_STATES.END;
+                            this.handleInput(null);
+                        } else {
+                            console.log('\nTake a hit, Player1:\n');
+                        }
                     }
 
                     break;
@@ -172,31 +183,38 @@ var Controller = exports.Controller = function () {
                         console.log('\nTake a hit, Player1:\n');
                     } else {
                         this.render.renderShootingTable(this.table1player);
-                        console.log('\nTake a hit, Player2:\n');
+
+                        if ((await this.calculateWin(this.table1player)) === this.ships.parts) {
+                            this.winner = 2;
+                            this.gameState = this.GAME_STATES.END;
+                            this.handleInput(null);
+                        } else {
+                            console.log('\nTake a hit, Player2:\n');
+                        }
                     }
 
                     break;
 
                 case this.GAME_STATES.END:
-                    console.log('Finish');
+                    console.log('Congrats, ' + (this.winner === 1 ? 'Player1' : 'Player2') + '!');
                     break;
             }
         }
     }, {
         key: 'placingShips',
         value: function placingShips(table, shipName, shipCount) {
+            if (this.gameState === this.GAME_STATES.PLACING_SHIPS_PLAYER1) {
+                this.render.renderTable(this.table1player);
+            } else if (this.gameState === this.GAME_STATES.PLACING_SHIPS_PLAYER2) {
+                this.render.renderTable(this.table2player);
+            }
+
             if (shipCount + 1 === this.ships[shipName].amount) {
                 // switch to next ship!
                 var currentIndex = Object.keys(this.ships).indexOf(shipName);
-
                 if (currentIndex < Object.keys(this.ships).length - 1) {
                     this.currentShip = Object.keys(this.ships)[currentIndex + 1] + ':0';
 
-                    if (this.gameState === this.GAME_STATES.PLACING_SHIPS_PLAYER1) {
-                        this.render.renderTable(this.table1player);
-                    } else if (this.gameState === this.GAME_STATES.PLACING_SHIPS_PLAYER2) {
-                        this.render.renderTable(this.table2player);
-                    }
                     console.log('Place: ' + this.currentShip.split(':')[0] + ' Size of: ' + this.ships[this.currentShip.split(':')[0]].size);
                 } else {
                     console.log('\nYay! All ships placed\n');
@@ -221,9 +239,29 @@ var Controller = exports.Controller = function () {
             }
         }
     }, {
+        key: 'calculateWin',
+        value: function calculateWin(table) {
+            return new Promise(function (resolve) {
+                var count = 0;
+
+                table.forEach(function (row, rIndex) {
+                    row.forEach(function (col, cIndex) {
+                        if (col === 2) {
+                            count++;
+                        }
+
+                        if (rIndex === table.length - 1 && cIndex === row.length - 1) {
+                            resolve(count);
+                        }
+                    });
+                });
+            });
+        }
+    }, {
         key: 'init',
         value: function init() {
             var player = 0;
+            this.winner = 0;
             this.gameState = this.GAME_STATES.START;
 
             this.handleInput(null);

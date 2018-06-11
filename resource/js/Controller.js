@@ -42,9 +42,11 @@ export class Controller {
         this.readline.on('line', this.handleInput);
 
         this.currentShip = 'battleship:0';
+        this.winner = 0;
 
         this.ships = {
             amount: 10,
+            parts: 20,
             battleship: {
                 size: 4,
                 amount: 1
@@ -62,6 +64,7 @@ export class Controller {
                 amount: 4
             }
         }
+
 
         for (let row = 0; row < this.tableConfig.height; row++) {
             this.table1player.push([]);
@@ -133,7 +136,16 @@ export class Controller {
                     console.log('\nTake a hit, Player2:\n');
                 } else {
                     this.render.renderShootingTable(this.table2player);
-                    console.log('\nTake a hit, Player1:\n');
+
+                    console.log(await this.calculateWin(this.table2player));
+
+                    if (await this.calculateWin(this.table2player) === this.ships.parts) {
+                        this.winner = 1;
+                        this.gameState = this.GAME_STATES.END;
+                        this.handleInput(null);
+                    } else {
+                        console.log('\nTake a hit, Player1:\n');
+                    }
                 }
 
                 break;
@@ -149,30 +161,37 @@ export class Controller {
                     console.log('\nTake a hit, Player1:\n');
                 } else {
                     this.render.renderShootingTable(this.table1player);
-                    console.log('\nTake a hit, Player2:\n');
+                    
+                    if (await this.calculateWin(this.table1player) === this.ships.parts) {
+                        this.winner = 2;
+                        this.gameState = this.GAME_STATES.END;
+                        this.handleInput(null);
+                    } else {
+                        console.log('\nTake a hit, Player2:\n');
+                    }
                 }
 
                 break;
 
-            case this.GAME_STATES.END: 
-                console.log('Finish');
+            case this.GAME_STATES.END:
+                console.log(`Congrats, ${this.winner === 1 ? 'Player1' : 'Player2'}!`);
                 break;
         }
     }
 
     placingShips(table, shipName, shipCount) {
+        if (this.gameState === this.GAME_STATES.PLACING_SHIPS_PLAYER1) {
+            this.render.renderTable(this.table1player);
+        } else if (this.gameState === this.GAME_STATES.PLACING_SHIPS_PLAYER2) {
+            this.render.renderTable(this.table2player);
+        }
+
         if (shipCount + 1 === this.ships[shipName].amount) {
             // switch to next ship!
             const currentIndex = Object.keys(this.ships).indexOf(shipName);
-
             if (currentIndex < Object.keys(this.ships).length - 1) {
                 this.currentShip = `${Object.keys(this.ships)[currentIndex + 1]}:0`;
                 
-                if (this.gameState === this.GAME_STATES.PLACING_SHIPS_PLAYER1) {
-                    this.render.renderTable(this.table1player);
-                } else if (this.gameState === this.GAME_STATES.PLACING_SHIPS_PLAYER2) {
-                    this.render.renderTable(this.table2player);
-                }
                 console.log(`Place: ${this.currentShip.split(':')[0]} Size of: ${this.ships[this.currentShip.split(':')[0]].size}`);
             } else {
                 console.log('\nYay! All ships placed\n');
@@ -197,8 +216,27 @@ export class Controller {
         }
     }
 
+    calculateWin(table) {
+        return new Promise(resolve => {
+            let count = 0;
+
+            table.forEach((row, rIndex) => {
+                row.forEach((col, cIndex) => {
+                    if (col === 2) {
+                        count++;
+                    }
+
+                    if (rIndex === table.length - 1 && cIndex === row.length - 1) {
+                        resolve(count);
+                    }
+                });
+            });
+        });
+    }
+
     init() {
         let player = 0;
+        this.winner = 0;
         this.gameState = this.GAME_STATES.START;
 
         this.handleInput(null);

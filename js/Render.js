@@ -34,7 +34,6 @@ var Render = exports.Render = function () {
                         if (col === '') {
                             rowString += '   |';
                         } else {
-                            // rowString += ` ${col} |`;    
                             rowString += ' ' + (col === 1 ? 'S' : '-') + ' |';
                         }
                     });

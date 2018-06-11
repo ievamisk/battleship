@@ -31,8 +31,6 @@ var TableController = exports.TableController = function () {
                 colIndex = Number.parseInt(input.split(' ')[1], 10) - 1;
                 direction = input.split(' ')[2];
 
-                console.log(rowIndex, colIndex, direction);
-
                 var _ref = await _this.getAllCoords([rowIndex, colIndex], direction, shipSize),
                     shipCoords = _ref.shipCoords,
                     shipSurroundingCoords = _ref.shipSurroundingCoords;
@@ -65,7 +63,6 @@ var TableController = exports.TableController = function () {
 
                 if (direction === 'h') {
                     if (coords[1] + (size - 1) > 9) {
-                        console.log('h', coords[0], size);
                         console.log('Not enough space to place your ship');
                         reject(null, null);
                     } else {
@@ -94,7 +91,6 @@ var TableController = exports.TableController = function () {
                     }
                 } else {
                     if (coords[0] + (size - 1) > 9) {
-                        console.log('v', coords[1], size);
                         console.log('Not enough space to place your ship');
                         reject(null, null);
                     } else {
@@ -135,7 +131,6 @@ var TableController = exports.TableController = function () {
                 coords.forEach(function (coord, index) {
                     if (coord[0] > -1 && coord[0] < 10 && coord[1] > -1 && coord[1] < 10) {
                         if (table[coord[0]][coord[1]] !== 0) {
-                            console.log(table[coord[0]][coord[1]], coord[0], coord[1]);
                             resolve(false);
                         }
                     }
